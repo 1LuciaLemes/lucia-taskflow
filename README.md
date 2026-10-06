@@ -1,8 +1,13 @@
 # Task System
 
-Aplicación web para gestionar tareas de un pequeño equipo de desarrollo:
-crear, visualizar, actualizar y eliminar tareas y organizarlas mediante
-subtareas con múltiples niveles de profundidad.
+Aplicación web para gestionar el trabajo de un equipo de desarrollo:
+organiza tareas en un tablero con subtareas anidadas de múltiples
+niveles, arrastra y suelta para reordenar, filtra, buscá de forma
+global y seguí el avance con progreso ponderado y resumen de esfuerzo.
+
+Construida como monorepo con npm workspaces: una API REST en el
+backend y una aplicación React en el frontend, con persistencia en
+memoria (por defecto) o en PostgreSQL.
 
 ## Capturas
 
@@ -14,21 +19,56 @@ subtareas con múltiples niveles de profundidad.
 
 ![Vista mobile](assets/capturas/mobile_completo.png)
 
-## Estructura
+## Funcionalidades
+
+- **Jerarquía de tareas**: tareas principales con subtareas anidadas
+  en tantos niveles como haga falta.
+- **Tablero con drag & drop**: reordenar tareas y mover subtareas
+  entre padres arrastrándolas, con indicadores visuales de destino.
+- **Estados y prioridades**: estados `PENDING`, `IN_PROGRESS` y
+  `COMPLETE`; prioridades `LOW`, `MEDIUM` y `HIGH` con badge visual.
+- **Estimación de esfuerzo**: horas estimadas por tarea, con resumen
+  total pendiente, en curso y completado.
+- **Progreso ponderado**: barra de progreso que considera el árbol
+  completo de subtareas (no solo las tareas raíz).
+- **Búsqueda global**: buscador que encuentra tareas en cualquier
+  nivel de la jerarquía y resalta las coincidencias.
+- **Filtros y paginación**: orden, prioridad y paginado de a 6 por
+  página en el tablero.
+- **Diseño responsive**: layout adaptado a desktop y mobile.
+- **Persistencia configurable**: repositorio en memoria sin
+  configuración, o PostgreSQL definiendo `DATABASE_URL`.
+
+## Stack tecnológico
+
+| Capa      | Tecnologías |
+| --------- | ----------- |
+| Backend   | Node.js, Express, TypeScript |
+| Frontend  | React, TypeScript, Vite, Tailwind CSS |
+| Base de datos | PostgreSQL (opcional) |
+| Tests     | Vitest, Supertest |
+| Lint      | ESLint (flat config) |
+| Deploy    | Docker Compose |
+
+## Arquitectura
 
 ```
-backend/   API REST (Node.js + Express + TypeScript)
-frontend/  Aplicación web (React + TypeScript + Tailwind CSS)
-docs/      Documentación (requisitos, arquitectura, uso de IA)
+frontend (React)  →  API REST  →  routes → controllers → services → repositories
+                                                             │
+                                              ┌──────────────┴──────────────┐
+                                              │                             │
+                                     InMemoryTaskRepository         PgTaskRepository
+                                                                    (DATABASE_URL)
 ```
 
-- Frontend y backend están dentro del mismo repositorio (monorepo con
-  npm workspaces).
-- El frontend se comunica exclusivamente con el backend mediante una
-  API REST.
-- El backend separa rutas, controllers, services (lógica de negocio) y
-  repositories (persistencia). Por defecto usa un repositorio en
-  memoria; si se define `DATABASE_URL` usa PostgreSQL.
+- **Monorepo con npm workspaces**: `backend/`, `frontend/` y `docs/`
+  conviven en el mismo repositorio.
+- **Separación de capas en el backend**: las rutas derivan en
+  controllers (HTTP), services (lógica de negocio y validación) y
+  repositories (persistencia). La persistencia se elige en tiempo de
+  arranque según `DATABASE_URL`.
+- **El frontend se comunica exclusivamente con la API REST**; en
+  desarrollo usa un proxy (`/tasks` → `http://localhost:3000`).
 
 ### Estructura de código
 
@@ -63,128 +103,104 @@ frontend/
     main.tsx       # punto de entrada
 ```
 
-## Clonar el repositorio
+## Cómo probar la app
+
+### Con Docker (recomendado)
+
+Único requisito: [Docker](https://docs.docker.com/get-docker/) con
+Docker Compose.
 
 ```bash
-git clone https://github.com/1LuciaLemes/task-system.git
-cd task-system
-```
-
-Con Docker no hace falta nada más: instalá las dependencias solo si vas
-a ejecutar en modo local sin Docker.
-
-```bash
-# Opcional: solo para ejecución local (npm run dev)
-npm install
-```
-
-## Requisitos
-
-- Docker y Docker Compose (para la ejecución en contenedores).
-- Node.js 20 (solo para desarrollo local sin Docker).
-
-## Ejecución con Docker Compose
-
-```bash
+git clone https://github.com/1LuciaLemes/lucia-taskflow.git
+cd lucia-taskflow
 docker compose up
 ```
 
-Esto levanta tres servicios:
+Levanta los tres servicios:
 
-| Servicio  | Descripción                     | URL                 |
-| --------- | ------------------------------- | ------------------- |
-| frontend  | Aplicación web (nginx)          | http://localhost:8080 |
-| backend   | API REST                        | http://localhost:3000 |
-| postgres  | Base de datos PostgreSQL        | localhost:5432      |
+| Servicio | Descripción                    | URL                  |
+| -------- | ------------------------------ | -------------------- |
+| frontend | Aplicación web (nginx)         | http://localhost:8080 |
+| backend  | API REST                       | http://localhost:3000 |
+| postgres | Base de datos PostgreSQL       | localhost:5432       |
 
-### Variables de entorno
+Abrí http://localhost:8080 y ya podés usar la app. El esquema de la
+base de datos se crea automáticamente la primera vez
+(`backend/db/schema.sql`).
 
-Se pueden configurar mediante un archivo `.env` en la raíz (ver
-`.env.example`):
+### Sin Docker (desarrollo local)
 
-| Variable          | Predeterminado | Descripción              |
-| ----------------- | -------------- | ------------------------ |
-| `POSTGRES_USER`   | `task`         | Usuario de PostgreSQL    |
-| `POSTGRES_PASSWORD` | `task`       | Contraseña de PostgreSQL |
-| `POSTGRES_DB`     | `tasks`        | Base de datos            |
-
-El esquema de la base de datos se crea automáticamente al inicializar
-el contenedor de PostgreSQL (`backend/db/schema.sql`).
-
-## Ejecución local (sin Docker)
-
-El backend y el frontend son dos programas que se ejecutan al mismo
-tiempo y cada uno "ocupa" su ventana de terminal (no devuelven el
-control hasta cerrarlos con `Ctrl+C`). Por eso se necesitan **dos
-ventanas de terminal abiertas a la vez** en la raíz del proyecto:
-
-- **Ventana 1 — backend:** arranca la API en http://localhost:3000.
-- **Ventana 2 — frontend:** arranca la interfaz en http://localhost:5173.
+Requisitos: Node.js 20 o superior.
 
 ```bash
-# Ventana 1: backend
+npm install
+```
+
+Se necesitan dos terminales en la raíz del proyecto:
+
+```bash
+# Terminal 1: backend en http://localhost:3000
 npm run dev -w task-system-backend
 
-# Ventana 2: frontend
+# Terminal 2: frontend en http://localhost:5173
 npm run dev -w task-system-frontend
 ```
 
-El frontend en modo desarrollo usa un proxy hacia el backend
-(`/tasks` → `http://localhost:3000`), así que no hace falta configuración
-adicional.
-
-Al ejecutar el backend (Ventana 1) se puede elegir la persistencia:
-
-### Opción A: persistencia en memoria (por defecto)
-
-Sin configurar ninguna variable, el backend usa `InMemoryTaskRepository`:
-no requiere base de datos y los datos se pierden al reiniciar el servidor.
-Ideal para pruebas rápidas o desarrollo del frontend.
+Por defecto el backend guarda en memoria (los datos se pierden al
+reiniciar). Para usar PostgreSQL, levantá solo la base con Docker y
+definí `DATABASE_URL`:
 
 ```bash
-# Ventana 1 - backend en memoria:
-npm run dev -w task-system-backend
-```
-
-### Opción B: persistencia con PostgreSQL
-
-Para que el backend local use la base de datos, primero se levanta solo
-el servicio de Postgres con Docker (el `schema.sql` se aplica la primera
-vez). El comando de Docker con `-d` corre en segundo plano, así que no
-ocupa su propia ventana:
-
-```bash
-# En cualquier terminal (no ocupa la ventana; corre en segundo plano).
 docker compose up -d postgres
-```
 
-Después, en la Ventana 1 se arranca el backend conectado a Postgres:
-
-```bash
-# Ventana 1 - backend conectado a PostgreSQL:
-$env:DATABASE_URL="postgres://task:task@localhost:5432/tasks"
-npm run dev -w task-system-backend
-```
-
-En Linux/macOS la Ventana 1 queda así:
-
-```bash
+# Linux/macOS
 DATABASE_URL=postgres://task:task@localhost:5432/tasks npm run dev -w task-system-backend
+
+# Windows PowerShell
+$env:DATABASE_URL="postgres://task:task@localhost:5432/tasks"; npm run dev -w task-system-backend
 ```
 
-Opcionalmente se puede definir `PGSSL=true` si la conexión lo requiere.
-Con esta opción los datos persisten entre reinicios. Para detener la base
-de datos: `docker compose stop postgres` (conserva los datos) o
-`docker compose down -v` (borra el volumen).
+Opcionalmente definí `PGSSL=true` si la conexión lo requiere. Para
+detener la base: `docker compose stop postgres` (conserva los datos)
+o `docker compose down -v` (borra el volumen).
+
+### Variables de entorno
+
+Configurables mediante un archivo `.env` en la raíz (ver
+`.env.example`):
+
+| Variable            | Predeterminado | Descripción            |
+| ------------------- | -------------- | ---------------------- |
+| `POSTGRES_USER`     | `task`         | Usuario de PostgreSQL   |
+| `POSTGRES_PASSWORD` | `task`         | Contraseña de PostgreSQL|
+| `POSTGRES_DB`       | `tasks`        | Base de datos           |
+| `DATABASE_URL`      | —              | URL de conexión (activa PostgreSQL) |
+| `PGSSL`             | `false`        | SSL para la conexión    |
+| `PORT`              | `3000`         | Puerto del backend      |
 
 ## Comandos
 
-Desde la raíz:
+Desde la raíz del proyecto:
 
-| Comando             | Descripción                              |
-| ------------------- | ---------------------------------------- |
-| `npm run build`     | Compila backend y frontend               |
-| `npm test`          | Ejecuta los tests de backend y frontend  |
+| Comando          | Descripción                             |
+| ---------------- | --------------------------------------- |
+| `npm run dev -w task-system-backend`  | Backend en desarrollo (watch)  |
+| `npm run dev -w task-system-frontend` | Frontend en desarrollo (Vite)  |
+| `npm run build`   | Compila backend y frontend              |
+| `npm test`        | Ejecuta los tests de backend y frontend |
+| `npm run lint`    | Analiza el código con ESLint            |
+| `docker compose up` | Levanta todo en contenedores          |
+
+## Tests
+
+```bash
+npm test
+```
+
+- **Backend**: lógica de negocio (services) y API end-to-end con
+  Supertest.
+- **Frontend**: cliente HTTP, utilidades de árbol, búsqueda,
+  validación y formato.
 
 ## Documentación
 
