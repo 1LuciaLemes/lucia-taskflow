@@ -1,4 +1,10 @@
 import { randomUUID } from 'node:crypto';
+import {
+  TITLE_REQUIRED_MESSAGE,
+  isEnumValue,
+  isValidEstimateNumber,
+  isValidTitle,
+} from '@task-system/shared';
 import { Task, TaskKind, TaskPriority, TaskStatus } from '../models/task.js';
 import type { TaskRepository } from '../repositories/taskRepository.js';
 import { CreateTaskInput, EffortSummary, UpdateTaskInput, ValidationError } from '../types/task.js';
@@ -9,13 +15,13 @@ export class TaskService {
   async createTask(input: CreateTaskInput): Promise<Task> {
     this.validateTitle(input.title);
     this.validateEstimate(input.estimate);
-    if (input.status !== undefined && !this.isValidEnum(TaskStatus, input.status)) {
+    if (input.status !== undefined && !isEnumValue(TaskStatus, input.status)) {
       throw new ValidationError(`Estado inválido: ${input.status}`);
     }
-    if (input.priority !== undefined && !this.isValidEnum(TaskPriority, input.priority)) {
+    if (input.priority !== undefined && !isEnumValue(TaskPriority, input.priority)) {
       throw new ValidationError(`Prioridad inválida: ${input.priority}`);
     }
-    if (input.kind !== undefined && !this.isValidEnum(TaskKind, input.kind)) {
+    if (input.kind !== undefined && !isEnumValue(TaskKind, input.kind)) {
       throw new ValidationError(`Tipo inválido: ${input.kind}`);
     }
 
@@ -76,10 +82,10 @@ export class TaskService {
     if (input.estimate !== undefined) {
       this.validateEstimate(input.estimate);
     }
-    if (input.status !== undefined && !this.isValidEnum(TaskStatus, input.status)) {
+    if (input.status !== undefined && !isEnumValue(TaskStatus, input.status)) {
       throw new ValidationError(`Estado inválido: ${input.status}`);
     }
-    if (input.priority !== undefined && !this.isValidEnum(TaskPriority, input.priority)) {
+    if (input.priority !== undefined && !isEnumValue(TaskPriority, input.priority)) {
       throw new ValidationError(`Prioridad inválida: ${input.priority}`);
     }
 
@@ -252,8 +258,8 @@ export class TaskService {
   }
 
   private validateTitle(title: string): void {
-    if (typeof title !== 'string' || title.trim().length === 0) {
-      throw new ValidationError('El título es obligatorio');
+    if (!isValidTitle(title)) {
+      throw new ValidationError(TITLE_REQUIRED_MESSAGE);
     }
   }
 
@@ -261,12 +267,8 @@ export class TaskService {
     if (estimate === undefined || estimate === null) {
       return;
     }
-    if (typeof estimate !== 'number' || Number.isNaN(estimate) || estimate < 0) {
+    if (!isValidEstimateNumber(estimate)) {
       throw new ValidationError('La estimación debe ser un número no negativo');
     }
-  }
-
-  private isValidEnum<T extends Record<string, string>>(enumObject: T, value: string): boolean {
-    return Object.values(enumObject).includes(value);
   }
 }
