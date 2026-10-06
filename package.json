@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "workspaces": [
+    "packages/shared",
     "backend",
     "frontend"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w task-system-shared && npm run build -w task-system-backend && npm run build -w task-system-frontend",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint ."
   },
