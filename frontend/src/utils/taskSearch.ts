@@ -76,7 +76,7 @@ export function interpretQuery(raw: string): TaskQuery {
       return { type: 'date', day, month };
     }
   }
-  const inlineDate = text.match(/^(\d{1,2})[\/-](\d{1,2})$/);
+  const inlineDate = text.match(/^(\d{1,2})[/-](\d{1,2})$/);
   if (inlineDate) {
     const day = Number(inlineDate[1]);
     const month = Number(inlineDate[2]);
