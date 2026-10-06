@@ -1,5 +1,7 @@
 # Task System
 
+[![CI](https://github.com/1LuciaLemes/lucia-taskflow/actions/workflows/ci.yml/badge.svg)](https://github.com/1LuciaLemes/lucia-taskflow/actions/workflows/ci.yml)
+
 Aplicación web para gestionar el trabajo de un equipo de desarrollo:
 organiza tareas en un tablero con subtareas anidadas de múltiples
 niveles, arrastra y suelta para reordenar, filtra, buscá de forma
