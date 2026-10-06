@@ -2,7 +2,6 @@ import { DragEvent, Fragment, PointerEvent, UIEvent, useEffect, useMemo, useRef,
 import {
   CreateTaskInput,
   Task,
-  TaskPriority,
   TaskStatus,
   UpdateTaskInput,
 } from '../types/task.js';

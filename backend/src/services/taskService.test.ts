@@ -123,7 +123,7 @@ describe('TaskService - jerarquía', () => {
     const { service } = setup();
     const root = await service.createTask({ title: 'Root' });
     await service.createTask({ title: 'Sub 1', parentTaskId: root.id });
-    const sub2 = await service.createTask({ title: 'Sub 2', parentTaskId: root.id });
+    await service.createTask({ title: 'Sub 2', parentTaskId: root.id });
 
     const subtasks = await service.getSubtasks(root.id);
     expect(subtasks.map((task) => task.title)).toEqual(['Sub 1', 'Sub 2']);
@@ -220,8 +220,8 @@ describe('TaskService - actualización', () => {
 
   it('reordena hermanas mediante position', async () => {
     const { service } = setup();
-    const a = await service.createTask({ title: 'A' });
-    const b = await service.createTask({ title: 'B' });
+    await service.createTask({ title: 'A' });
+    await service.createTask({ title: 'B' });
     const c = await service.createTask({ title: 'C' });
 
     await service.updateTask(c.id, { position: 0 });
@@ -232,7 +232,7 @@ describe('TaskService - actualización', () => {
 
   it('mueve a otro padre y reordena con position', async () => {
     const { service } = setup();
-    const a = await service.createTask({ title: 'A' });
+    await service.createTask({ title: 'A' });
     const b = await service.createTask({ title: 'B' });
     const c = await service.createTask({ title: 'C' });
     await service.createTask({ title: 'Sibling', parentTaskId: b.id });
@@ -371,7 +371,7 @@ describe('TaskService - estimaciones', () => {
       parentTaskId: root.id,
       status: TaskStatus.COMPLETE,
     });
-    const other = await service.createTask({ title: 'Other', estimate: 20, status: TaskStatus.PENDING });
+    await service.createTask({ title: 'Other', estimate: 20, status: TaskStatus.PENDING });
 
     const summary = await service.getEffortSummary();
 
