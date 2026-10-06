@@ -63,8 +63,11 @@ frontend (React)  →  API REST  →  routes → controllers → services → re
                                                                     (DATABASE_URL)
 ```
 
-- **Monorepo con npm workspaces**: `backend/`, `frontend/` y `docs/`
-  conviven en el mismo repositorio.
+- **Monorepo con npm workspaces**: `packages/shared/`, `backend/`,
+  `frontend/` y `docs/` conviven en el mismo repositorio.
+- **Tipos y validaciones compartidas**: `packages/shared` centraliza los
+  enums, inputs y funciones de validación que usan tanto el backend como
+  el frontend (una única fuente de verdad).
 - **Separación de capas en el backend**: las rutas derivan en
   controllers (HTTP), services (lógica de negocio y validación) y
   repositories (persistencia). La persistencia se elige en tiempo de
@@ -73,6 +76,14 @@ frontend (React)  →  API REST  →  routes → controllers → services → re
   desarrollo usa un proxy (`/tasks` → `http://localhost:3000`).
 
 ### Estructura de código
+
+```
+packages/shared/
+  src/
+    task.ts        # enums, TaskBase, inputs y tipos auxiliares del dominio
+    validation.ts  # validaciones puras (título, estimación, enums)
+    index.ts       # exports públicos
+```
 
 ```
 backend/

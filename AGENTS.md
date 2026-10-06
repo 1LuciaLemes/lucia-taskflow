@@ -6,6 +6,7 @@ Guía para agentes de IA que trabajen en el repositorio Task System.
 
 Monorepo TypeScript con npm workspaces:
 
+- `packages/shared/` — tipos del dominio y validaciones compartidas entre back y front (`@task-system/shared`).
 - `backend/` — API REST (Node.js + Express + TypeScript): routes → controllers → services → repositories.
 - `frontend/` — app web (React + TypeScript + Tailwind CSS, Vite).
 - `docs/` — requisitos, arquitectura y registro de uso de IA.
