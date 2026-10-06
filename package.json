@@ -8,7 +8,7 @@
     "frontend"
   ],
   "scripts": {
-    "build": "npm run build -w task-system-shared && npm run build -w task-system-backend && npm run build -w task-system-frontend",
+    "build": "npm run build -w @task-system/shared && npm run build -w task-system-backend && npm run build -w task-system-frontend",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint ."
   },
