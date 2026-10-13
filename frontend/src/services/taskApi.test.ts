@@ -19,6 +19,7 @@ const TASK: Task = {
 describe('taskApi', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('getTasks retorna el listado', async () => {
@@ -119,5 +120,21 @@ describe('taskApi', () => {
     const promise = getTasks();
     await expect(promise).rejects.toBeInstanceOf(ApiError);
     await expect(promise).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
+  });
+
+  it('envía el header de sesión cuando el modo demo está activo', async () => {
+    vi.stubEnv('VITE_DEMO_MODE', 'true');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => [TASK],
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getTasks();
+
+    const init = fetchMock.mock.calls[0][1] as { headers: Record<string, string> };
+    expect(init.headers['x-demo-session']).toBeTruthy();
   });
 });

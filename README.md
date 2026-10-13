@@ -1,7 +1,5 @@
 # Task System
 
-[![CI](https://github.com/1LuciaLemes/lucia-taskflow/actions/workflows/ci.yml/badge.svg)](https://github.com/1LuciaLemes/lucia-taskflow/actions/workflows/ci.yml)
-
 Aplicación web para gestionar el trabajo de un equipo de desarrollo:
 organiza tareas en un tablero con subtareas anidadas de múltiples
 niveles, arrastra y suelta para reordenar, filtra, buscá de forma
@@ -63,8 +61,11 @@ frontend (React)  →  API REST  →  routes → controllers → services → re
                                                                     (DATABASE_URL)
 ```
 
-- **Monorepo con npm workspaces**: `backend/`, `frontend/` y `docs/`
-  conviven en el mismo repositorio.
+- **Monorepo con npm workspaces**: `packages/shared/`, `backend/`,
+  `frontend/` y `docs/` conviven en el mismo repositorio.
+- **Tipos y validaciones compartidas**: `packages/shared` centraliza los
+  enums, inputs y funciones de validación que usan tanto el backend como
+  el frontend (una única fuente de verdad).
 - **Separación de capas en el backend**: las rutas derivan en
   controllers (HTTP), services (lógica de negocio y validación) y
   repositories (persistencia). La persistencia se elige en tiempo de
@@ -73,6 +74,14 @@ frontend (React)  →  API REST  →  routes → controllers → services → re
   desarrollo usa un proxy (`/tasks` → `http://localhost:3000`).
 
 ### Estructura de código
+
+```
+packages/shared/
+  src/
+    task.ts        # enums, TaskBase, inputs y tipos auxiliares del dominio
+    validation.ts  # validaciones puras (título, estimación, enums)
+    index.ts       # exports públicos
+```
 
 ```
 backend/
@@ -179,6 +188,55 @@ Configurables mediante un archivo `.env` en la raíz (ver
 | `DATABASE_URL`      | —              | URL de conexión (activa PostgreSQL) |
 | `PGSSL`             | `false`        | SSL para la conexión    |
 | `PORT`              | `3000`         | Puerto del backend      |
+| `CORS_ORIGIN`       | —              | Orígenes permitidos (lista separada por comas) |
+| `DEMO_API_KEY`      | —              | Si está definida, protege las escrituras de la demo |
+| `VITE_API_URL`      | —              | URL del backend que consume el frontend (build) |
+| `VITE_DEMO_MODE`    | `false`        | Activa el modo demo: tablero aislado por navegador + cartel |
+
+## Deploy
+
+La demo pública se despliega en dos servicios gratuitos, **sin base de
+datos**:
+
+| Parte      | Plataforma | Detalle                                            |
+| ---------- | ---------- | -------------------------------------------------- |
+| Frontend   | Vercel     | raíz del proyecto: `frontend/`                     |
+| Backend    | Render     | raíz del repositorio (necesita `packages/shared`)  |
+
+El backend corre **sin `DATABASE_URL`**, por lo que usa la persistencia
+en memoria: la demo es totalmente usable (crear, editar, borrar), pero
+los datos **se reinician solos** cuando el servicio vuelve a arrancar.
+Es intencional: nada se guarda de forma permanente hasta que exista
+autenticación.
+
+Cada navegador ve **su propio tablero**: el frontend genera un id de
+sesión, lo guarda en `localStorage` y lo manda en el header
+`x-demo-session`; el backend le asigna a cada sesión su propio
+repositorio en memoria. Así dos visitantes no se ven ni se borran las
+tareas entre sí. Si el visitante borra los datos del sitio, obtiene un
+tablero nuevo y vacío.
+
+Backend en Render:
+
+- **Build**: `npm ci && npm run build -w @task-system/shared && npm run build -w task-system-backend`
+- **Start**: `npm run start -w task-system-backend`
+- **Variables**: `CORS_ORIGIN` (URL del frontend). Opcional:
+  `DEMO_API_KEY` para exigir el header `x-api-key` en las escrituras.
+
+Frontend en Vercel:
+
+- **Root directory**: `frontend`
+- **Variables de build**: `VITE_API_URL` (URL del backend) y
+  `VITE_DEMO_MODE=true` para activar el tablero por sesión y el cartel
+  de demo.
+
+### Con persistencia (PostgreSQL)
+
+Para guardar de verdad, definí `DATABASE_URL` (por ejemplo con
+[Neon](https://neon.tech)) y `PGSSL=true` en el backend. La tabla
+`tasks` se crea con `backend/db/schema.sql`. Con `DEMO_API_KEY`
+definida, el backend deja pasar las lecturas pero exige el header
+`x-api-key` para crear, editar o borrar.
 
 ## Comandos
 
@@ -188,7 +246,7 @@ Desde la raíz del proyecto:
 | ---------------- | --------------------------------------- |
 | `npm run dev -w task-system-backend`  | Backend en desarrollo (watch)  |
 | `npm run dev -w task-system-frontend` | Frontend en desarrollo (Vite)  |
-| `npm run build`   | Compila backend y frontend              |
+| `npm run build`   | Compila shared, backend y frontend      |
 | `npm test`        | Ejecuta los tests de backend y frontend |
 | `npm run lint`    | Analiza el código con ESLint            |
 | `docker compose up` | Levanta todo en contenedores          |

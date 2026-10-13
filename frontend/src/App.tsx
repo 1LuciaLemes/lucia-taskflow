@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sidebar } from './components/Sidebar.js';
+import { DemoBanner } from './components/DemoBanner.js';
 import { Dashboard } from './pages/Dashboard.js';
 import { useTasks } from './hooks/useTasks.js';
 import { CreateTaskInput, Task, TaskKind, TaskPriority, TaskStatus, UpdateTaskInput } from './types/task.js';
@@ -107,46 +108,49 @@ export function App() {
   };
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-board text-ink">
-      <Sidebar
-        className="hidden w-64 lg:sticky lg:top-6 lg:ml-16 lg:flex"
-        {...sidebarProps}
-      />
-
-      {navOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-board"
-            onClick={() => setNavOpen(false)}
-          />
-          <Sidebar
-            className="absolute inset-0 w-full overflow-y-auto bg-board p-6"
-            onClose={() => setNavOpen(false)}
-            {...sidebarProps}
-          />
-        </div>
-      ) : null}
-
-      <main className="flex min-w-0 flex-1 overflow-y-auto lg:overflow-hidden">
-        <Dashboard
-          tasks={tasks}
-          loading={loading}
-          error={error}
-          view={view}
-          sortBy={sortBy}
-          priorityFilter={priorityFilter}
-          onSortChange={setSortBy}
-          onPriorityChange={setPriorityFilter}
-          onOpenNav={() => setNavOpen(true)}
-          onRetry={() => void refresh()}
-          onCreateTask={handleCreateTask}
-          onUpdateTask={handleUpdateTask}
-          onCreateSubtask={handleCreateSubtask}
-          onDeleteTask={handleDeleteTask}
-          onCycleStatus={handleCycleStatus}
-          onMoveTask={handleMoveTask}
+    <div className="flex h-screen flex-col bg-board text-ink">
+      <DemoBanner />
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        <Sidebar
+          className="hidden w-64 lg:sticky lg:top-6 lg:ml-16 lg:flex"
+          {...sidebarProps}
         />
-      </main>
+
+        {navOpen ? (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div
+              className="absolute inset-0 bg-board"
+              onClick={() => setNavOpen(false)}
+            />
+            <Sidebar
+              className="absolute inset-0 w-full overflow-y-auto bg-board p-6"
+              onClose={() => setNavOpen(false)}
+              {...sidebarProps}
+            />
+          </div>
+        ) : null}
+
+        <main className="flex min-w-0 flex-1 overflow-y-auto lg:overflow-hidden">
+          <Dashboard
+            tasks={tasks}
+            loading={loading}
+            error={error}
+            view={view}
+            sortBy={sortBy}
+            priorityFilter={priorityFilter}
+            onSortChange={setSortBy}
+            onPriorityChange={setPriorityFilter}
+            onOpenNav={() => setNavOpen(true)}
+            onRetry={() => void refresh()}
+            onCreateTask={handleCreateTask}
+            onUpdateTask={handleUpdateTask}
+            onCreateSubtask={handleCreateSubtask}
+            onDeleteTask={handleDeleteTask}
+            onCycleStatus={handleCycleStatus}
+            onMoveTask={handleMoveTask}
+          />
+        </main>
+      </div>
     </div>
   );
 }

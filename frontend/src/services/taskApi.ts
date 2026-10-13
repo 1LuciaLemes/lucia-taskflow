@@ -4,6 +4,14 @@ import {
   Task,
   UpdateTaskInput,
 } from '../types/task.js';
+import { clearDemoKey, getDemoKey, promptDemoKey } from './demoAccess.js';
+import { getSessionId } from './session.js';
+
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+
+function isDemoMode(): boolean {
+  return import.meta.env.VITE_DEMO_MODE === 'true';
+}
 
 export class ApiError extends Error {
   constructor(
@@ -16,11 +24,43 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    headers: { 'Content-Type': 'application/json' },
+function buildHeaders(options?: RequestInit): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> | undefined),
+  };
+
+  if (isDemoMode()) {
+    headers['x-demo-session'] = getSessionId();
+  }
+
+  const demoKey = getDemoKey();
+  if (demoKey) {
+    headers['x-api-key'] = demoKey;
+  }
+
+  return headers;
+}
+
+async function request<T>(
+  path: string,
+  options?: RequestInit,
+  canRetry = true,
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    headers: buildHeaders(options),
   });
+
+  const isWrite = options?.method !== undefined && options.method !== 'GET';
+
+  if (response.status === 401 && isWrite && canRetry) {
+    clearDemoKey();
+    const key = promptDemoKey();
+    if (key) {
+      return request<T>(path, options, false);
+    }
+  }
 
   if (response.status === 204) {
     return undefined as T;

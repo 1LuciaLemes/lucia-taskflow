@@ -1,31 +1,9 @@
-import { TaskKind, TaskPriority, TaskStatus } from '../models/task.js';
-
-export interface CreateTaskInput {
-  kind?: TaskKind;
-  title: string;
-  description?: string | null;
-  status?: TaskStatus;
-  priority?: TaskPriority;
-  estimate?: number | null;
-  parentTaskId?: string | null;
-}
-
-export interface UpdateTaskInput {
-  title?: string;
-  description?: string | null;
-  status?: TaskStatus;
-  priority?: TaskPriority;
-  estimate?: number | null;
-  position?: number;
-  parentTaskId?: string | null;
-}
-
-export interface EffortSummary {
-  total: number;
-  pending: number;
-  inProgress: number;
-  complete: number;
-}
+export type {
+  ApiErrorPayload,
+  CreateTaskInput,
+  EffortSummary,
+  UpdateTaskInput,
+} from '@task-system/shared';
 
 export class ValidationError extends Error {
   constructor(message: string) {

@@ -62,7 +62,29 @@ traduce las acciones del usuario en llamadas HTTP.
 
 ---
 
-## 4. Responsabilidades de la capa de repositorio/persistencia
+## 4. Responsabilidades del paquete compartido
+
+`packages/shared` es un workspace npm que centraliza los tipos del
+dominio y las validaciones puras usadas por backend y frontend, para
+evitar duplicación entre ambas capas.
+
+- Define los enums del dominio (`TaskStatus`, `TaskPriority`,
+  `TaskKind`), la base de `Task`, los inputs de la API
+  (`CreateTaskInput`, `UpdateTaskInput`) y los tipos auxiliares
+  (`EffortSummary`, `SubtreeStats`, `ApiErrorPayload`).
+- Expone las validaciones puras: título obligatorio, estimación
+  numérica no negativa, pertenencia a enums, y los validadores de
+  formulario del frontend.
+- No depende de Express, React, ni de la persistencia: es código puro
+  compilado a `dist/` y consumido por ambos proyectos vía su `exports`.
+
+El backend define su `Task` con timestamps `Date`; el frontend usa
+`Task` con timestamps `string` (formato JSON). Ambos extienden la
+`TaskBase` compartida.
+
+---
+
+## 5. Responsabilidades de la capa de repositorio/persistencia
 
 - Encapsular el acceso a los datos.
 - Proveer una interfaz uniforme para las operaciones CRUD de tareas.
@@ -73,22 +95,24 @@ traduce las acciones del usuario en llamadas HTTP.
 
 ---
 
-## 5. Flujo de una operación
+## 6. Flujo de una operación
 
 Descripción de una operación de ejemplo (crear una tarea):
 
 1. El usuario completa el formulario en el frontend.
-2. El frontend envía una petición `POST /tasks` con los datos en JSON.
-3. La ruta correspondiente enruta la petición hacia el controller.
-4. El controller extrae y valida la estructura básica de la petición.
-5. El controller delega en el service, que aplica la lógica de negocio
-   (validaciones, valores iniciales, cálculo de `position`, etc.).
-6. El service llama al repository, que persiste la tarea.
-7. El repository devuelve la tarea persistida (con `id`, `createdAt`,
+2. El frontend valida los datos con las funciones de `packages/shared`.
+3. El frontend envía una petición `POST /tasks` con los datos en JSON.
+4. La ruta correspondiente enruta la petición hacia el controller.
+5. El controller extrae y valida la estructura básica de la petición.
+6. El controller delega en el service, que aplica la lógica de negocio
+   (validaciones compartidas, valores iniciales, cálculo de `position`,
+   etc.).
+7. El service llama al repository, que persiste la tarea.
+8. El repository devuelve la tarea persistida (con `id`, `createdAt`,
    `updatedAt`).
-8. El service retorna el resultado al controller.
-9. El controller responde con la representación JSON de la tarea.
-10. El frontend recibe la respuesta y actualiza la interfaz.
+9. El service retorna el resultado al controller.
+10. El controller responde con la representación JSON de la tarea.
+11. El frontend recibe la respuesta y actualiza la interfaz.
 
 De manera análoga fluyen las operaciones de lectura, actualización y
 eliminación. En todos los casos la comunicación entre frontend y
@@ -96,7 +120,16 @@ backend es exclusivamente HTTP JSON.
 
 ---
 
-## 6. Estructura de carpetas propuesta
+## 7. Estructura de carpetas
+
+### Raíz
+
+```
+packages/shared/  # tipos del dominio y validaciones compartidas
+backend/          # API REST (Express + TypeScript)
+frontend/         # aplicación web (React + TypeScript + Tailwind)
+docs/             # documentación
+```
 
 ### Backend
 
@@ -105,6 +138,7 @@ backend/
   src/
     controllers/   # manejo de peticiones HTTP y respuestas
     routes/        # definición de rutas de la API
+    middleware/    # CORS, candado y sesión de demo (x-api-key, x-demo-session)
     services/      # lógica de negocio
     repositories/  # acceso a datos (interfaz + implementaciones)
     models/        # entidades del dominio
@@ -131,7 +165,7 @@ frontend/
 
 ---
 
-## 7. Separación de responsabilidades
+## 8. Separación de responsabilidades
 
 La separación entre capas sigue un flujo descendente:
 
@@ -151,7 +185,7 @@ y que los cambios en una capa no se propaguen a las demás.
 
 ---
 
-## 8. Jerarquía de tareas y subtareas
+## 9. Jerarquía de tareas y subtareas
 
 La jerarquía se representa con el campo `parentTaskId`:
 
@@ -170,7 +204,7 @@ los repositorios.
 
 ---
 
-## 9. Independencia entre lógica de negocio y PostgreSQL
+## 10. Independencia entre lógica de negocio y PostgreSQL
 
 La separación se logra mediante el patrón Repository:
 
@@ -187,7 +221,7 @@ hacia PostgreSQL sin modificar la lógica de negocio.
 
 ---
 
-## 10. Organización de los tests
+## 11. Organización de los tests
 
 - **Tests unitarios de lógica de negocio (Vitest):** cubren las reglas
   de los services: validación de tareas, estimaciones, jerarquía,
@@ -202,33 +236,53 @@ Los tests se agrupan a nivel de módulo o capa dentro de cada proyecto
 
 ---
 
-## 11. Docker Compose (a implementar más adelante)
+## 12. Docker Compose
 
-Este documento no define todavía la configuración de Docker Compose.
-Se implementará en una etapa posterior del proyecto.
+`docker compose up` levanta tres servicios con una red interna:
 
-Como referencia, los servicios que se contemplan son:
+- **backend:** API REST en Node.js (build desde la raíz con
+  `backend/Dockerfile`), puerto `3000`, conectado a PostgreSQL.
+- **frontend:** build de Vite servido por nginx (`frontend/Dockerfile`),
+  puerto `8080`.
+- **postgres:** base de datos PostgreSQL 16 con volumen persistente y
+  healthcheck; el esquema (`backend/db/schema.sql`) se aplica al primer
+  arranque.
 
-- **backend:** servidor Node.js con la API REST.
-- **frontend:** servidor que sirve la aplicación React.
-- **postgres:** base de datos PostgreSQL.
-
-El objetivo será que una persona clone el repositorio y, siguiendo el
-README, ejecute `docker compose up` para levantar todo el sistema
-localmente sin depender de servicios cloud de terceros.
+Las variables de PostgreSQL se configuran en un `.env` en la raíz
+(`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`).
 
 ---
 
-## Decisiones pendientes
+## 13. Despliegue
 
-- **Detalle del esquema de datos:** la representación exacta de la
-  jerarquía dentro de PostgreSQL (tabla con auto-referencia) se
-  definirá al momento de implementar la capa de persistencia.
-- **Formato concreto del contrato API:** los payloads exactos de
-  request/response se definirán durante la implementación de la API,
-  tomando como base los endpoints mínimos de requisitos.
-- **Estrategia de paginación/servicio del orden:** el manejo del
-  ordenamiento con `position` (estándar de asignación de valores) se
-  definirá al implementar los servicios.
-- **Empaquetado y build:** las herramientas de build (Vite u otras)
-  se decidirán al configurar el proyecto frontend.
+La demo pública corre en dos servicios gestionados:
+
+- **Frontend (Vercel):** build estático de Vite; la raíz del proyecto es
+  `frontend/` y consume el backend mediante `VITE_API_URL`.
+- **Backend (Render):** servicio Node de larga duración. Como depende de
+  `@task-system/shared`, la raíz es el repositorio completo y el build
+  compila primero el paquete compartido. Necesita el script `start`
+  (`node dist/server.js`).
+
+Sin `DATABASE_URL`, el backend usa un repositorio en memoria **por
+sesión** (`SessionTaskRepository`): el frontend envía el header
+`x-demo-session` con un id guardado en el navegador y cada sesión
+obtiene su propio tablero aislado. La demo es efímera —se puede usar por
+completo, pero los datos se reinician al rearrancar el servicio (o al
+reiniciar el id del navegador). Es el modo de la demo pública hasta que
+exista autenticación; ahí la sesión se reemplaza por el usuario y el
+tablero reales. Para persistencia se configura `DATABASE_URL` (por
+ejemplo con Neon) y `PGSSL=true`.
+
+Al ser orígenes distintos, el backend habilita CORS de forma
+configurable con `CORS_ORIGIN` (lista separada por comas; `*` para
+pruebas). El modo demo es opcional: con `DEMO_API_KEY` definida, un
+middleware permite las lecturas pero exige el header `x-api-key` en las
+escrituras.
+
+---
+
+A diferencia de las decisiones pendientes de las primeras etapas, el
+esquema de datos, el contrato API, el orden por `position` y el build
+con Vite ya están definidos e implementados según documentan este
+archivo, `docs/requirements.md` y el README.

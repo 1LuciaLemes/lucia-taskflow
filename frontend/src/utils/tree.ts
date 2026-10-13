@@ -1,4 +1,4 @@
-import type { Task } from '../types/task.js';
+import type { SubtreeStats, Task } from '../types/task.js';
 import { TaskStatus } from '../types/task.js';
 
 export type TaskNode = Task & { children: TaskNode[] };
@@ -49,10 +49,7 @@ export function getNodeById(tasks: Task[], id: string): TaskNode | null {
   return findNodeById(buildTaskTree(tasks), id);
 }
 
-export interface SubtreeStats {
-  total: number;
-  complete: number;
-}
+export type { SubtreeStats };
 
 export function isPartiallyComplete(
   task: Task,
