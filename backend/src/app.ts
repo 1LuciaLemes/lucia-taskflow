@@ -7,9 +7,17 @@ import { TaskController } from './controllers/taskController.js';
 import { createTaskRouter } from './routes/taskRoutes.js';
 import { createCorsOptions } from './middleware/cors.js';
 import { demoGate } from './middleware/demoGate.js';
+import { demoSession } from './middleware/demoSession.js';
 import { ValidationError } from './types/task.js';
 
-export function createApp(repository: TaskRepository = new InMemoryTaskRepository()) {
+export interface AppOptions {
+  demoSessions?: boolean;
+}
+
+export function createApp(
+  repository: TaskRepository = new InMemoryTaskRepository(),
+  options: AppOptions = {},
+) {
   const app = express();
 
   const corsOptions = createCorsOptions();
@@ -18,6 +26,10 @@ export function createApp(repository: TaskRepository = new InMemoryTaskRepositor
   }
 
   app.use(express.json());
+
+  if (options.demoSessions) {
+    app.use(demoSession);
+  }
 
   const service = new TaskService(repository);
   const controller = new TaskController(service);
