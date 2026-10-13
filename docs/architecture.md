@@ -267,9 +267,8 @@ La demo pública corre en dos servicios gestionados:
 Sin `DATABASE_URL`, el backend usa el repositorio en memoria y la demo
 es efímera: se puede usar por completo, pero los datos se reinician al
 rearrancar el servicio. Es el modo de la demo pública hasta que exista
-autenticación; al arrancar sin base se cargan tareas de ejemplo. Para
-persistencia real se configura `DATABASE_URL` (por ejemplo con Neon) y
-`PGSSL=true`.
+autenticación. Para persistencia real se configura `DATABASE_URL` (por
+ejemplo con Neon) y `PGSSL=true`.
 
 Al ser orígenes distintos, el backend habilita CORS de forma
 configurable con `CORS_ORIGIN` (lista separada por comas; `*` para
