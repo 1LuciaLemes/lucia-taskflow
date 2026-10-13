@@ -138,7 +138,7 @@ backend/
   src/
     controllers/   # manejo de peticiones HTTP y respuestas
     routes/        # definición de rutas de la API
-    middleware/    # CORS y candado de demo (x-api-key)
+    middleware/    # CORS, candado y sesión de demo (x-api-key, x-demo-session)
     services/      # lógica de negocio
     repositories/  # acceso a datos (interfaz + implementaciones)
     models/        # entidades del dominio
@@ -264,10 +264,14 @@ La demo pública corre en dos servicios gestionados:
   compila primero el paquete compartido. Necesita el script `start`
   (`node dist/server.js`).
 
-Sin `DATABASE_URL`, el backend usa el repositorio en memoria y la demo
-es efímera: se puede usar por completo, pero los datos se reinician al
-rearrancar el servicio. Es el modo de la demo pública hasta que exista
-autenticación. Para persistencia real se configura `DATABASE_URL` (por
+Sin `DATABASE_URL`, el backend usa un repositorio en memoria **por
+sesión** (`SessionTaskRepository`): el frontend envía el header
+`x-demo-session` con un id guardado en el navegador y cada sesión
+obtiene su propio tablero aislado. La demo es efímera —se puede usar por
+completo, pero los datos se reinician al rearrancar el servicio (o al
+reiniciar el id del navegador). Es el modo de la demo pública hasta que
+exista autenticación; ahí la sesión se reemplaza por el usuario y el
+tablero reales. Para persistencia se configura `DATABASE_URL` (por
 ejemplo con Neon) y `PGSSL=true`.
 
 Al ser orígenes distintos, el backend habilita CORS de forma

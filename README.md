@@ -193,7 +193,7 @@ Configurables mediante un archivo `.env` en la raíz (ver
 | `CORS_ORIGIN`       | —              | Orígenes permitidos (lista separada por comas) |
 | `DEMO_API_KEY`      | —              | Si está definida, protege las escrituras de la demo |
 | `VITE_API_URL`      | —              | URL del backend que consume el frontend (build) |
-| `VITE_DEMO_MODE`    | `false`        | Muestra el cartel de demo en el frontend |
+| `VITE_DEMO_MODE`    | `false`        | Activa el modo demo: tablero aislado por navegador + cartel |
 
 ## Deploy
 
@@ -211,6 +211,13 @@ los datos **se reinician solos** cuando el servicio vuelve a arrancar.
 Es intencional: nada se guarda de forma permanente hasta que exista
 autenticación.
 
+Cada navegador ve **su propio tablero**: el frontend genera un id de
+sesión, lo guarda en `localStorage` y lo manda en el header
+`x-demo-session`; el backend le asigna a cada sesión su propio
+repositorio en memoria. Así dos visitantes no se ven ni se borran las
+tareas entre sí. Si el visitante borra los datos del sitio, obtiene un
+tablero nuevo y vacío.
+
 Backend en Render:
 
 - **Build**: `npm ci && npm run build -w @task-system/shared && npm run build -w task-system-backend`
@@ -222,7 +229,8 @@ Frontend en Vercel:
 
 - **Root directory**: `frontend`
 - **Variables de build**: `VITE_API_URL` (URL del backend) y
-  `VITE_DEMO_MODE=true` para mostrar el cartel de demo.
+  `VITE_DEMO_MODE=true` para activar el tablero por sesión y el cartel
+  de demo.
 
 ### Con persistencia (PostgreSQL)
 
