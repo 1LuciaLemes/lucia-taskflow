@@ -138,6 +138,7 @@ backend/
   src/
     controllers/   # manejo de peticiones HTTP y respuestas
     routes/        # definición de rutas de la API
+    middleware/    # CORS y candado de demo (x-api-key)
     services/      # lógica de negocio
     repositories/  # acceso a datos (interfaz + implementaciones)
     models/        # entidades del dominio
@@ -249,6 +250,28 @@ Los tests se agrupan a nivel de módulo o capa dentro de cada proyecto
 
 Las variables de PostgreSQL se configuran en un `.env` en la raíz
 (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`).
+
+---
+
+## 13. Despliegue
+
+El sistema corre en tres servicios gestionados, sin docker en
+producción:
+
+- **Frontend (Vercel):** build estático de Vite; la raíz del proyecto es
+  `frontend/` y consume el backend mediante `VITE_API_URL`.
+- **Backend (Render):** servicio Node de larga duración. Como depende de
+  `@task-system/shared`, la raíz es el repositorio completo y el build
+  compila primero el paquete compartido. Necesita el script `start`
+  (`node dist/server.js`).
+- **PostgreSQL (Neon):** base administrada; aporta `DATABASE_URL` y
+  requiere `PGSSL=true`.
+
+Al ser orígenes distintos, el backend habilita CORS de forma
+configurable con `CORS_ORIGIN` (lista separada por comas; `*` para
+pruebas). El modo demo es opcional: con `DEMO_API_KEY` definida, un
+middleware permite las lecturas pero exige el header `x-api-key` en las
+escrituras.
 
 ---
 

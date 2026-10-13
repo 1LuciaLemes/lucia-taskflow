@@ -190,6 +190,36 @@ Configurables mediante un archivo `.env` en la raíz (ver
 | `DATABASE_URL`      | —              | URL de conexión (activa PostgreSQL) |
 | `PGSSL`             | `false`        | SSL para la conexión    |
 | `PORT`              | `3000`         | Puerto del backend      |
+| `CORS_ORIGIN`       | —              | Orígenes permitidos (lista separada por comas) |
+| `DEMO_API_KEY`      | —              | Si está definida, protege las escrituras de la demo |
+| `VITE_API_URL`      | —              | URL del backend que consume el frontend (build) |
+
+## Deploy
+
+El sistema se despliega en tres servicios gratuitos:
+
+| Parte      | Plataforma | Detalle                                   |
+| ---------- | ---------- | ----------------------------------------- |
+| Frontend   | Vercel     | raíz del proyecto: `frontend/`            |
+| Backend    | Render     | raíz del repositorio (necesita `packages/shared`) |
+| PostgreSQL | Neon       | base administrada; aporta `DATABASE_URL`  |
+
+Backend en Render:
+
+- **Build**: `npm ci && npm run build -w @task-system/shared && npm run build -w task-system-backend`
+- **Start**: `npm run start -w task-system-backend`
+- **Variables**: `DATABASE_URL` (de Neon), `PGSSL=true`, `CORS_ORIGIN`
+  (URL del frontend), `DEMO_API_KEY` (opcional).
+
+Frontend en Vercel:
+
+- **Root directory**: `frontend`
+- **Variable de build**: `VITE_API_URL` con la URL del backend.
+
+Con `DEMO_API_KEY` definida, el backend deja pasar las lecturas pero
+exige el header `x-api-key` para crear, editar o borrar. El frontend lo
+pide una sola vez y lo guarda en el navegador. La clave se rota desde
+Render y se puede limpiar la base desde la consola SQL de Neon.
 
 ## Comandos
 
@@ -199,7 +229,7 @@ Desde la raíz del proyecto:
 | ---------------- | --------------------------------------- |
 | `npm run dev -w task-system-backend`  | Backend en desarrollo (watch)  |
 | `npm run dev -w task-system-frontend` | Frontend en desarrollo (Vite)  |
-| `npm run build`   | Compila backend y frontend              |
+| `npm run build`   | Compila shared, backend y frontend      |
 | `npm test`        | Ejecuta los tests de backend y frontend |
 | `npm run lint`    | Analiza el código con ESLint            |
 | `docker compose up` | Levanta todo en contenedores          |
