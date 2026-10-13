@@ -5,8 +5,8 @@ export function DemoBanner() {
 
   return (
     <div className="border-b border-brand-light bg-brand-light px-4 py-2 text-center text-xs font-medium text-brand-deep sm:text-sm">
-      Demo pública: podés probar todo, pero los datos no se guardan y se
-      reinician solos.
+      Demo pública: este es un tablero temporal de tu navegador. Podés
+      probar todo, pero los datos no se guardan y se reinician solos.
     </div>
   );
 }

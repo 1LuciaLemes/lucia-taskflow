@@ -5,8 +5,13 @@ import {
   UpdateTaskInput,
 } from '../types/task.js';
 import { clearDemoKey, getDemoKey, promptDemoKey } from './demoAccess.js';
+import { getSessionId } from './session.js';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+
+function isDemoMode(): boolean {
+  return import.meta.env.VITE_DEMO_MODE === 'true';
+}
 
 export class ApiError extends Error {
   constructor(
@@ -24,6 +29,10 @@ function buildHeaders(options?: RequestInit): Record<string, string> {
     'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string> | undefined),
   };
+
+  if (isDemoMode()) {
+    headers['x-demo-session'] = getSessionId();
+  }
 
   const demoKey = getDemoKey();
   if (demoKey) {
