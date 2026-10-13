@@ -255,8 +255,7 @@ Las variables de PostgreSQL se configuran en un `.env` en la raíz
 
 ## 13. Despliegue
 
-El sistema corre en tres servicios gestionados, sin docker en
-producción:
+La demo pública corre en dos servicios gestionados:
 
 - **Frontend (Vercel):** build estático de Vite; la raíz del proyecto es
   `frontend/` y consume el backend mediante `VITE_API_URL`.
@@ -264,8 +263,13 @@ producción:
   `@task-system/shared`, la raíz es el repositorio completo y el build
   compila primero el paquete compartido. Necesita el script `start`
   (`node dist/server.js`).
-- **PostgreSQL (Neon):** base administrada; aporta `DATABASE_URL` y
-  requiere `PGSSL=true`.
+
+Sin `DATABASE_URL`, el backend usa el repositorio en memoria y la demo
+es efímera: se puede usar por completo, pero los datos se reinician al
+rearrancar el servicio. Es el modo de la demo pública hasta que exista
+autenticación; al arrancar sin base se cargan tareas de ejemplo. Para
+persistencia real se configura `DATABASE_URL` (por ejemplo con Neon) y
+`PGSSL=true`.
 
 Al ser orígenes distintos, el backend habilita CORS de forma
 configurable con `CORS_ORIGIN` (lista separada por comas; `*` para

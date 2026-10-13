@@ -193,33 +193,44 @@ Configurables mediante un archivo `.env` en la raíz (ver
 | `CORS_ORIGIN`       | —              | Orígenes permitidos (lista separada por comas) |
 | `DEMO_API_KEY`      | —              | Si está definida, protege las escrituras de la demo |
 | `VITE_API_URL`      | —              | URL del backend que consume el frontend (build) |
+| `VITE_DEMO_MODE`    | `false`        | Muestra el cartel de demo en el frontend |
 
 ## Deploy
 
-El sistema se despliega en tres servicios gratuitos:
+La demo pública se despliega en dos servicios gratuitos, **sin base de
+datos**:
 
-| Parte      | Plataforma | Detalle                                   |
-| ---------- | ---------- | ----------------------------------------- |
-| Frontend   | Vercel     | raíz del proyecto: `frontend/`            |
-| Backend    | Render     | raíz del repositorio (necesita `packages/shared`) |
-| PostgreSQL | Neon       | base administrada; aporta `DATABASE_URL`  |
+| Parte      | Plataforma | Detalle                                            |
+| ---------- | ---------- | -------------------------------------------------- |
+| Frontend   | Vercel     | raíz del proyecto: `frontend/`                     |
+| Backend    | Render     | raíz del repositorio (necesita `packages/shared`)  |
+
+El backend corre **sin `DATABASE_URL`**, por lo que usa la persistencia
+en memoria: la demo es totalmente usable (crear, editar, borrar), pero
+los datos **se reinician solos** cuando el servicio vuelve a arrancar.
+Es intencional: nada se guarda de forma permanente hasta que exista
+autenticación.
 
 Backend en Render:
 
 - **Build**: `npm ci && npm run build -w @task-system/shared && npm run build -w task-system-backend`
 - **Start**: `npm run start -w task-system-backend`
-- **Variables**: `DATABASE_URL` (de Neon), `PGSSL=true`, `CORS_ORIGIN`
-  (URL del frontend), `DEMO_API_KEY` (opcional).
+- **Variables**: `CORS_ORIGIN` (URL del frontend). Opcional:
+  `DEMO_API_KEY` para exigir el header `x-api-key` en las escrituras.
 
 Frontend en Vercel:
 
 - **Root directory**: `frontend`
-- **Variable de build**: `VITE_API_URL` con la URL del backend.
+- **Variables de build**: `VITE_API_URL` (URL del backend) y
+  `VITE_DEMO_MODE=true` para mostrar el cartel de demo.
 
-Con `DEMO_API_KEY` definida, el backend deja pasar las lecturas pero
-exige el header `x-api-key` para crear, editar o borrar. El frontend lo
-pide una sola vez y lo guarda en el navegador. La clave se rota desde
-Render y se puede limpiar la base desde la consola SQL de Neon.
+### Con persistencia (PostgreSQL)
+
+Para guardar de verdad, definí `DATABASE_URL` (por ejemplo con
+[Neon](https://neon.tech)) y `PGSSL=true` en el backend. La tabla
+`tasks` se crea con `backend/db/schema.sql`. Con `DEMO_API_KEY`
+definida, el backend deja pasar las lecturas pero exige el header
+`x-api-key` para crear, editar o borrar.
 
 ## Comandos
 
