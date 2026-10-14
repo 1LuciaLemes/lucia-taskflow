@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npm run build -w @task-system/shared && npm run build -w task-system-frontend",
+  "outputDirectory": "frontend/dist"
+}
